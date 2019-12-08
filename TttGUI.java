@@ -4,18 +4,22 @@ package ticTacToeAssignment;
 
 
 import java.util.ArrayList;
+import java.util.Optional;
 
 import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
 import javafx.animation.ParallelTransition;
-import javafx.animation.Timeline;
-import javafx.event.ActionEvent;
+
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
 import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.effect.GaussianBlur;
 import javafx.scene.effect.InnerShadow;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -42,17 +46,8 @@ public class TttGUI extends BorderPane {
 		cellGroup.getChildren().add(cellBoard);
 		
 		
-		//centerLayout.getChildren().add(winnerPane(' '));
-		
-		
-		//VBox winnerPane = winnerPane(' ');
-		//HBox centerPane = new HBox();
-		//centerPane.getChildren().add(winnerPane);
-		//centerPane.getChildren().add(cellBoard);
-		
 		HBox titlePane = getTitlePane();
 		this.setCenter(cellGroup);
-		//this.setBottom(null);
 		this.setTop(titlePane);
 		setAlignment(cellGroup,Pos.TOP_CENTER);
 		
@@ -76,39 +71,36 @@ public class TttGUI extends BorderPane {
 		return titleBox;
 	}
 	
-	public VBox winnerPane(char letter) {
+	public VBox winnerPane(String input) {
 		Button restartButton = new Button("Restart");
+		VBox winnerPane = new VBox();
+		winnerPane.setAlignment(Pos.TOP_CENTER);
+		winnerPane.setStyle("-fx-padding: 10;" + "-fx-border-style: solid inside;" 
+			+ "-fx-border-width: 5;"
+			+ "-fx-border-insets: 5;"
+			+ "-fx-border-radius: 5;"
+			+ "-fx-border-color: #98d9e3;");
 		restartButton.setOnMouseClicked(restart);
-		if(letter!=' ') {
+		
+		if(input.equals("X") || input.equals("O")) {
 			Label winnerLabel = new Label();
-			winnerLabel.setText("" + letter + " has won!");
+			winnerLabel.setText(input + " has won!");
 			winnerLabel.setStyle("-fx-font: 50 arial;");
 			winnerLabel.setTextFill(Color.web("#9b25f5"));
-		
-			VBox winnerPane = new VBox();
 			winnerPane.getChildren().add(winnerLabel);
-			winnerPane.setAlignment(Pos.TOP_CENTER);
-			winnerPane.setStyle("-fx-padding: 10;" + "-fx-border-style: solid inside;" 
-				+ "-fx-border-width: 5;"
-				+ "-fx-border-insets: 5;"
-				+ "-fx-border-radius: 5;"
-				+ "-fx-border-color: #98d9e3;");
 		
-			winnerPane.getChildren().add(restartButton);
-			return winnerPane;
-		}
-		else {
-			VBox winnerPane = new VBox();
-			winnerPane.getChildren().add(restartButton);
-			winnerPane.setAlignment(Pos.TOP_CENTER);
-			winnerPane.setStyle("-fx-padding: 10;" + "-fx-border-style: solid inside;" 
-				+ "-fx-border-width: 5;"
-				+ "-fx-border-insets: 5;"
-				+ "-fx-border-radius: 5;"
-				+ "-fx-border-color: #98d9e3;");
-			return winnerPane;
 			
 		}
+		else {
+			Label drawLabel = new Label();
+			drawLabel.setText("Draw!");
+			drawLabel.setStyle("-fx-font: 50 arial;");
+			drawLabel.setTextFill(Color.web("#9b25f5"));
+			winnerPane.getChildren().add(drawLabel);
+		}
+		winnerPane.getChildren().add(restartButton);
+		return winnerPane;
+		
 		
 		
 	}
@@ -123,7 +115,7 @@ public class TttGUI extends BorderPane {
 		setBottom(null);
 		setAlignment(cellGroup,Pos.TOP_CENTER);
 		
-		//this.setPadding(new Insets(10,10,10,10));
+		
 	};
 	
 	
@@ -137,14 +129,31 @@ public class TttGUI extends BorderPane {
 	private class TttGrid extends GridPane  {
 		private TttCell[][] cells = new TttCell[3][3];
 		private Button[][] buttons = new Button[3][3];
-		private Image xImage = new Image("x.png");
-		private Image oImage = new Image("o.png");
+		private Image xImage;
+		private Image oImage;
 		private ImageView ivX = null;
 		private ImageView ivY = null;
 		private boolean isFinished = false;
+		private int numMoves = 0;
 		private ArrayList<TttCell> correctCells = new ArrayList<TttCell>();
 		private char letter = 'X';
 		public TttGrid() {
+			
+		try {
+			xImage = new Image("x.png");
+		} catch(NullPointerException e) {
+				e.printStackTrace();
+		} catch(IllegalArgumentException e) {
+			e.printStackTrace();
+		}
+		try {
+			oImage = new Image("o.png");
+		}  catch(NullPointerException e) {
+			e.printStackTrace();
+		} catch(IllegalArgumentException e) {
+			e.printStackTrace();
+		}
+		
 			this.setPrefSize(600, 600);
 			this.setHgap(1);
 			this.setVgap(1);
@@ -183,9 +192,9 @@ public class TttGUI extends BorderPane {
 		private EventHandler<MouseEvent> click = mouseEvent -> {
 			Button button = (Button)mouseEvent.getSource();
 			if(isSelected(button)) {
-				//button.setText(""+letter);
+				numMoves++;
 			
-				if(letter == 'X') {
+				if(letter == 'X' && xImage!= null) {
 					ivX = new ImageView();
 					ivX.setImage(xImage);
 					ivX.setFitHeight(110);
@@ -197,7 +206,7 @@ public class TttGUI extends BorderPane {
 					if(!isFinished)
 						letter = 'O';
 				}
-				else {
+				else if(letter == 'O' && oImage != null) {
 					ivY = new ImageView();
 					ivY.setImage(oImage);
 					ivY.setFitHeight(120);
@@ -210,8 +219,16 @@ public class TttGUI extends BorderPane {
 						letter = 'X';
 				}
 			}
+			if(numMoves >= 9 && !isFinished) {
+				setBottom(winnerPane("Draw"));
+				for(Button[] rows: buttons) {
+					for(Button b: rows) {
+						b.setOnMouseClicked(null);
+					}
+				} 
+			}
 			if(isFinished) {
-				setBottom(winnerPane(letter));
+				setBottom(winnerPane("" +letter));
 				for(Button[] rows: buttons) {
 					for(Button b: rows) {
 						b.setOnMouseClicked(null);
@@ -220,22 +237,12 @@ public class TttGUI extends BorderPane {
 				
 				
 				ParallelTransition effectAll = new ParallelTransition();
-				
-			   // System.out.println("SIZE: " + correctButtons.size());
-			    /*for(int i = 0; i < correctButtons.size(); i++) {
-			    	correctButtons.get(i).setStyle("-fx-background-color: #ff424c;");
-			    }
-			    for(int i = 0; i < 3; i++) {
-			    	System.out.println(buttons[0][i].equals(correctButtons.get(i)));
-			    } */
-			   
 			    setEffectGroup(effectAll,correctCells);
-			    //for(int i = 0; i < correctButtons.size(); i++) {
-			    //	correctButtons.get(i).setStyle("-fx-background-color: #ff424c;");
-			    //}
 			    effectAll.play();
 				
 			}
+			
+			
 			
 			
 		}; 
@@ -287,59 +294,61 @@ public class TttGUI extends BorderPane {
 					if(button.equals(buttons[i][j]) && cells[i][j].getIsEmpty()) {
 						cells[i][j].setCharacter(letter);
 						cells[i][j].setIsEmpty(false);
-						System.out.println("(" + i + ", " + j + ")");
 						checkAll(cells[i][j],i,j);
-						
-						
 						return true;
 					}
-					
-					
+					else if(button.equals(buttons[i][j]) && !cells[i][j].getIsEmpty()) {
+						TttGUI.this.setEffect(new GaussianBlur());
+						Alert alert = new Alert(AlertType.INFORMATION);
+						alert.setTitle("Oh no!");
+						alert.setHeaderText("Invalid Move");
+						alert.setContentText("Cannot click on a button with a letter! Click Ok to continue");
+						//alert.showAndWait();
+						Optional<ButtonType> result = alert.showAndWait();
+						 if (result.isPresent() && result.get() == ButtonType.OK) {
+							 System.out.println(alert.getButtonTypes());
+						     TttGUI.this.setEffect(null);
+						 }
+						
+						
+						
+					}
 				}
 			}
 			return false;
 		}
 		
 		private boolean checkAll(TttCell cell,int x, int y) {
-			if(checkRows(cell,x,y)) {
+			if(checkRows(cell,x)) {
 				isFinished = true;
 				return true;
 			}
-			else if(checkColumns(cell,x,y)) {
+			else if(checkColumns(cell,y)) {
 				isFinished = true;
 				return true;
 			}
-			else if(checkDiagonal(cell)) {
+			else if(checkLeftDiagonal(cell)) {
 				isFinished = true;
 				return true;
 			} 
 			return false;
 		}
 		
-		private boolean checkRows(TttCell cell,int xPos, int yPos) {
+		private boolean checkRows(TttCell cell,int xPos) {
 			int counter = 0;
-			String s = "";
+			
 			System.out.println(cell);
 			for(int j = 0; j < 3; j++) {
 				if(cell.equals(cells[xPos][j]) && counter != 3) {
 					counter++;
-					s+="(" + xPos + ", " + j + "), ";
-					
 					correctCells.add(cell);
-					
 				}
 				else {
-					counter = 0;
-					s = "";
-				}
-					
+					counter = 0;	
+				}	
 			}
 			
 			if(counter == 3) {
-				System.out.println(cell.getCharacter() + " has won.");
-				
-				
-				System.out.println(s);
 				return true;
 			}
 			else {
@@ -348,7 +357,7 @@ public class TttGUI extends BorderPane {
 			}
 		}
 		
-		private boolean checkColumns(TttCell cell,int xPos, int yPos) {
+		private boolean checkColumns(TttCell cell,int yPos) {
 			int counter = 0;
 			System.out.println(cell);
 			for(int j = 0; j < 3; j++) {
@@ -358,21 +367,16 @@ public class TttGUI extends BorderPane {
 				}
 				else 
 					counter = 0;
-				
-				
 			}
-			
 			if(counter == 3) {
-				System.out.println(cell.getCharacter() + " has won.");
+				
 				return true;
 			}
 			correctCells.clear();
 			return false;
 		}
-		private boolean checkDiagonal(TttCell cell) {
+		private boolean checkLeftDiagonal(TttCell cell) {
 			int leftCounter = 0;
-			int rightCounter = 0;
-			
 			System.out.println(cell);
 			for(int j = 0; j < 3; j++) {
 				if(cell.equals(cells[j][j]) && leftCounter != 3) {
@@ -380,24 +384,41 @@ public class TttGUI extends BorderPane {
 					correctCells.add(cell);
 				}
 				else 
-					leftCounter = 0;
-					
+					leftCounter = 0;	
 			}
 			
 			if(leftCounter == 3) {
-				System.out.println(cell.getCharacter() + " has won.");
 				return true;
 			}
 			else {
 				correctCells.clear();
+				return checkRightDiagonal(cell);
 			}
 			
-			return false;
+		
 		}
 		
-		private char getLetter() {
-			return letter;
+		private boolean checkRightDiagonal(TttCell cell) {
+			int rightIndex = 2;
+			int rightCounter = 0;
+			for(int i = 0; i < 3; i++) {
+				if(cell.equals(cells[i][rightIndex]) && rightCounter != 3) {
+					rightCounter++;
+					correctCells.add(cell);
+				}
+				else
+					rightCounter = 0;
+				rightIndex= (rightIndex-1) % 3;
+			}
+			if(rightCounter == 3) {
+				return true;
+			}
+			else {
+				correctCells.clear();
+				return false;
+			}
 		}
+		
 		
 	}
 	
