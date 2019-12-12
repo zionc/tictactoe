@@ -5,6 +5,11 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
+/**
+ * Main method sets the parent node to TttGUI for the scene
+ * @author zchil
+ *
+ */
 public class TttMain extends Application {
 
 	@Override
@@ -15,7 +20,6 @@ public class TttMain extends Application {
 		
 		TttGUI gui = new TttGUI();
 		
-		//main.setId("pane");
 		Scene scene = new Scene(gui,1400,900);
 		
 		primaryStage.setScene(scene);
